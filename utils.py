@@ -49,7 +49,18 @@ def is_valid_setting(setting):
     
     return False
 
+def get_guild_settings(guilds_settings, id):
+    for guild in guilds_settings:
+        if guild['guild_id'] == id:
+            return guild
+
 def display_guild_settings(guild_settings):
-    embed = discord.Embed(title="Nudeny Settings", color=discord.Color.green)
-    embed.add_field(name="**Filter:** *remove nude or sexy image*", value="`{}`".format(guild_settings['filter']), inline=False)
+    embed = discord.Embed(title="Nudeny Settings", description="`!nudeny <setting> <True/False>`", colour=discord.Colour.from_rgb(35, 224, 192))
+    embed.add_field(name="**filter:** `{}`".format(guild_settings['filter']), value="(*Remove nude or sexy image*)", inline=False)
+    embed.add_field(name="**censor:** `{}`".format(guild_settings['censor']), value="(*Censor exposed body parts. Not applicable to sexy images.*)", inline=False)
+    embed.add_field(name="**spoiler:** `{}`".format(guild_settings['spoiler']), value="(*Instead of removing nude or sexy image spoiler is applied instead.*)", inline=False)
+    embed.add_field(name="**include_sexy:** `{}`".format(guild_settings['include_sexy']), value="(*If set to True, sexy images will be included for Filter and Spoiler.*)", inline=False)
+    embed.add_field(name="**kick_member:** `{}`".format(guild_settings['kick_member']), value="(*If set to True, the user that sends a nude image will be kicked.*)", inline=False)
+    embed.add_field(name="**ban_member:** `{}`".format(guild_settings['ban_member']), value="(*If set to True, the user that sends a nude image will be banned.*)", inline=False)
+    embed.set_footer(text="Please note that when the \"censor\" setting is turned on, the \"filter\" setting will automatically turn off, and vice versa. Additionally, the \"spoiler\" setting only works with the \"filter\" setting.")
     return embed

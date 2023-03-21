@@ -5,7 +5,7 @@ import requests
 from nudeny import Classify, Detect
 from io import BytesIO
 from dotenv import load_dotenv
-from utils import censor_image, get_image_attachments, is_valid_setting, display_guild_settings
+from utils import censor_image, get_image_attachments, is_valid_setting, display_guild_settings, get_guild_settings
 load_dotenv()
 
 TOKEN = os.environ.get('TOKEN')
@@ -16,8 +16,8 @@ detect = Detect()
 # bot = discord.bot(intents=discord.Intents(
 #     message_content=True, messages=True, guild_messages=True))
 
-bot = commands.Bot(command_prefix='!', intents=discord.Intents(
-    message_content=True, messages=True, guild_messages=True))
+bot = commands.Bot(command_prefix=commands.when_mentioned, intents=discord.Intents(
+    message_content=True, messages=True, guild_messages=True, guilds=True))
 
 guilds_settings = []
 
@@ -28,7 +28,7 @@ async def on_ready():
             "guild_id": guild.id,
             "kick_member": False,
             "ban_member": False,
-            "spoiler": True,
+            "spoiler": False,
             "filter": True,
             "include_sexy": True,
             "censor": False
@@ -38,33 +38,27 @@ async def on_ready():
 
 @bot.command()
 @commands.has_permissions(administrator=True)
-async def nudeny(ctx):
-    guild_settings = {}
-    print("hello?")
-    await ctx.send("hello")
-    # for guild in guilds_settings:
-    #         if guild['guild_id'] == ctx.guild.id:
-    #             guild_settings = guild
-    #             break
+async def set(ctx, option, *, value=None):
+    settings = get_guild_settings(guilds_settings, ctx.guild.id)
+    await ctx.send("{} {}".format(option, value))
+    if is_valid_setting(option):
+        try:
+            bool_value = bool(value)
+        except ValueError:
+            await ctx.send("Invalid setting value. Please enter 'True' or 'False'.")
+            return
 
-    # if setting.lower() == "settings":
-    #     await ctx.send(embed=display_guild_settings(guild_settings=guild_settings))
-    #     return
-
-    # if is_valid_setting(setting):
-    #     try:
-    #         bool_value = bool(value)
-    #     except ValueError:
-    #         await ctx.send("Invalid setting value. Please enter 'True' or 'False'.")
-    #         return
-
+@bot.command()
+async def guide(ctx):
+    settings = get_guild_settings(guilds_settings, ctx.guild.id)
+    await ctx.send(embed=display_guild_settings(guild_settings=settings))  
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send("You don't have permission to use that command.")
     else:
-        await ctx.send('Command executed successfully!')
+        await ctx.send(error)
 
 @bot.event
 async def on_message(message):
