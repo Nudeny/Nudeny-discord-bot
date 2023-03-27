@@ -1,11 +1,13 @@
 import os
+import ast
 import discord
 from discord.ext import commands
+from typing import Literal
 import requests
 from nudeny import Classify, Detect
 from io import BytesIO
 from dotenv import load_dotenv
-from utils import censor_image, get_image_attachments, is_valid_setting, display_guild_settings, get_guild_settings
+from utils import censor_image, get_image_attachments, is_valid_setting, display_guild_settings, get_guild_settings, is_bool, set_guild_settings
 load_dotenv()
 
 TOKEN = os.environ.get('TOKEN')
@@ -30,35 +32,78 @@ async def on_ready():
             "ban_member": False,
             "spoiler": False,
             "filter": True,
-            "include_sexy": True,
+            "include_sexy": False,
             "censor": False
         })
-
+    synced = await bot.tree.sync()
+    print("Synced {} command(s)".format(len(synced)))
     print(f'{bot.user} has connected to Discord!')
 
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def set(ctx, option, *, value=None):
-    settings = get_guild_settings(guilds_settings, ctx.guild.id)
-    await ctx.send("{} {}".format(option, value))
-    if is_valid_setting(option):
+@bot.tree.command(name="set", description="Update Nudeny bot server settings.")
+async def set(interaction: discord.Interaction, option: Literal['filter', 'censor', 'spoiler', 'include_sexy', 'kick_member', 'ban_member'],  value:Literal['True','False']):
+
+    if interaction.user.guild_permissions.administrator == False:
+        return await interaction.response.send_message("You don't have permission to use that command.")
+
+    # Forces an error if option is empty
+    type(option)
+    
+    if is_valid_setting(option) and value != None:
         try:
-            bool_value = bool(value)
+            if(is_bool(value)):
+                value = value.title()
+                value = ast.literal_eval(value)
+                settings = get_guild_settings(guilds_settings, interaction.guild.id)
+                settings = set_guild_settings(settings, option=option, value=value)
+                await interaction.response.send_message(embed=display_guild_settings(guild_settings=settings))        
+            else:
+                await interaction.response.send_message("Invalid value. Please enter 'True' or 'False'.")
         except ValueError:
-            await ctx.send("Invalid setting value. Please enter 'True' or 'False'.")
+            await interaction.response.send_message("Invalid setting value. Please enter 'True' or 'False'.")
             return
-
-@bot.command()
-async def guide(ctx):
-    settings = get_guild_settings(guilds_settings, ctx.guild.id)
-    await ctx.send(embed=display_guild_settings(guild_settings=settings))  
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("You don't have permission to use that command.")
     else:
-        await ctx.send(error)
+        await interaction.response.send_message("Invalid option or value.")
+
+
+@bot.tree.command(name="guide", description="Display Nudeny bot server settings.")
+async def guide(interaction: discord.Interaction):
+    settings = get_guild_settings(guilds_settings, interaction.guild_id)
+    await interaction.response.send_message(embed=display_guild_settings(guild_settings=settings))
+
+# @bot.command()
+# @commands.has_permissions(administrator=True)
+# async def set(ctx, option, *, value=None):
+
+#     # Forces an error if option is empty
+#     type(option)
+    
+#     if is_valid_setting(option) and value != None:
+#         try:
+#             if(is_bool(value)):
+#                 value = value.title()
+#                 value = ast.literal_eval(value)
+#                 settings = get_guild_settings(guilds_settings, ctx.guild.id)
+#                 settings = set_guild_settings(settings, option=option, value=value)
+#                 await ctx.send(embed=display_guild_settings(guild_settings=settings))        
+#             else:
+#                 await ctx.send("Invalid value. Please enter 'True' or 'False'.")
+#         except ValueError:
+#             await ctx.send("Invalid setting value. Please enter 'True' or 'False'.")
+#             return
+#     else:
+#         await ctx.send("Invalid option or value.")
+
+# @bot.command()
+# async def guide(ctx):
+#     settings = get_guild_settings(guilds_settings, ctx.guild.id)
+#     await ctx.send(embed=display_guild_settings(guild_settings=settings))  
+
+# @bot.event
+# async def on_command_error(ctx, error):
+#     if isinstance(error, commands.MissingPermissions):
+#         await ctx.send("You don't have permission to use that command.")
+#     else:
+#         await ctx.send(error)
 
 @bot.event
 async def on_message(message):

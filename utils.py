@@ -53,9 +53,68 @@ def get_guild_settings(guilds_settings, id):
     for guild in guilds_settings:
         if guild['guild_id'] == id:
             return guild
+        
+def set_guild_settings(setting, option, value):
+    option = option.lower()
+    
+    # Set to True
+    if value == True and option == 'filter' and setting['filter'] == False:
+        setting['filter'] = True
+        setting['censor'] = False
+    elif value == True and option == 'spoiler' and setting['spoiler'] == False and setting['filter'] == True:
+        setting['spoiler'] = True
+    elif value == True and option == 'include_sexy' and setting['include_sexy'] == False and setting['filter'] == True:
+        setting['include_sexy'] = True
+    elif value == True and option == 'censor' and setting['censor'] == False:
+        setting['filter'] = False
+        setting['censor'] = True
+        setting['spoiler'] = False
+        setting['include_sexy'] = False
+
+    if value == True and option == 'kick_member' and setting['kick_member'] == False:
+        setting['kick_member'] = True
+        setting['ban_member'] = False
+    elif value == True and option == 'ban_member' and setting['ban_member'] == False:
+        setting['kick_member'] = False
+        setting['ban_member'] = True
+
+    # Set to False
+    if value == False and option == 'filter' and setting['filter'] == True:
+        setting['filter'] = False
+        setting['censor'] = True
+        setting['spoiler'] = False
+        setting['include_sexy'] = False
+    elif value == False and option == 'spoiler' and setting['spoiler'] == True and setting['filter'] == True:
+        setting['spoiler'] = False
+    elif value == False and option == 'include_sexy' and setting['include_sexy'] == True and setting['filter'] == True:
+        setting['include_sexy'] = False
+    elif value == False and option == 'censor' and setting['censor'] == True:
+        setting['filter'] = True
+        setting['censor'] = False
+        setting['spoiler'] = False
+        setting['include_sexy'] = False
+
+    if value == False and option == 'kick_member' and setting['kick_member'] == True:
+        setting['kick_member'] = False
+        setting['ban_member'] = False
+    elif value == False and option == 'ban_member' and setting['ban_member'] == True:
+        setting['kick_member'] = False
+        setting['ban_member'] = False
+
+    return setting
+        
+def is_bool(value):
+    if type(value) == bool:
+        return True
+    elif type(value) == str:
+        value = value.title()
+        if value == 'True' or value == 'False':
+            return True
+        return False
+    return False
 
 def display_guild_settings(guild_settings):
-    embed = discord.Embed(title="Nudeny Settings", description="`!nudeny <setting> <True/False>`", colour=discord.Colour.from_rgb(35, 224, 192))
+    embed = discord.Embed(title="Nudeny Settings", description="`/set <option> <value>`", colour=discord.Colour.from_rgb(35, 224, 192))
     embed.add_field(name="**filter:** `{}`".format(guild_settings['filter']), value="(*Remove nude or sexy image*)", inline=False)
     embed.add_field(name="**censor:** `{}`".format(guild_settings['censor']), value="(*Censor exposed body parts. Not applicable to sexy images.*)", inline=False)
     embed.add_field(name="**spoiler:** `{}`".format(guild_settings['spoiler']), value="(*Instead of removing nude or sexy image spoiler is applied instead.*)", inline=False)
