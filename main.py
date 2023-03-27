@@ -114,6 +114,7 @@ async def on_message(message):
     safe_filenames = []
     author = ""
     nude_counter = 0
+    sexy_counter = 0
     files = []
     unsupported_file_urls = []
     unsupported_file_filenames = []
@@ -153,6 +154,8 @@ async def on_message(message):
                     for index, prediction in enumerate(predictions):
                         if prediction['class'] == "nude":
                             nude_counter += 1
+                        elif prediction['class'] == "sexy" and settings['include_sexy']:
+                            sexy_counter += 1
                         else:
                             safe_urls.append(image_urls[index])
                             safe_filenames.append(image_filenames[index])
@@ -165,6 +168,8 @@ async def on_message(message):
                     message_string = "Posted by: {}".format(author)
                     if nude_counter > 0:
                         message_string = message_string + " {} image(s) contains nudity.".format(nude_counter)
+                    if sexy_counter > 0: 
+                        message_string = message_string + " {} image(s) contains sexy.".format(sexy_counter)
                     await message.channel.send(message_string, files = files)
 
             elif settings['censor']:
