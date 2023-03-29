@@ -123,3 +123,22 @@ def display_guild_settings(guild_settings):
     embed.add_field(name="**ban_member:** `{}`".format(guild_settings['ban_member']), value="(*If set to True, the user that sends a nude image will be banned.*)", inline=False)
     embed.set_footer(text="Please note that when the \"censor\" setting is turned on, the \"filter\" setting will automatically turn off, and vice versa. Additionally, the \"spoiler\" setting only works with the \"filter\" setting.")
     return embed
+
+def display_status(nude_counter=0 ,sexy_counter = 0 ,user="" ,message_content="", type=""):
+        
+        if type == "filter":
+            if nude_counter > 0 or sexy_counter > 0:
+                embed = discord.Embed(title="Nudeny Alert", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(255,0,0))
+                embed.add_field(name="**Nudeny bot detected:**", value="", inline=False)
+                embed.add_field(name="Nude: **`{}`**".format(nude_counter), value="")
+                embed.add_field(name="Sexy: **`{}`**".format(sexy_counter), value="")
+            else:
+                embed = discord.Embed(title="Nudeny", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(35, 224, 192))
+
+        elif type == 'censor':
+            embed = discord.Embed(title="Nudeny", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(35, 224, 192))
+
+        if message_content != "":
+            embed.add_field(name="**Message content:**", value="{}".format(message_content), inline=False)
+
+        return embed
