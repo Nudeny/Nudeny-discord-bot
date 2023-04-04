@@ -117,6 +117,7 @@ async def on_message(message):
     nude_counter = 0
     sexy_counter = 0
     files = []
+    unsupported_files = []
     unsupported_file_urls = []
     unsupported_file_filenames = []
     settings = {}
@@ -133,7 +134,7 @@ async def on_message(message):
             image_urls, image_filenames, unsupported_file_urls, unsupported_file_filenames = get_image_attachments(message.attachments)
             await message.delete()
 
-            if settings['filter']:
+            if settings['filter'] and not(not image_urls):
                 response = classify.imageClassifyUrl(urls=image_urls)
                 predictions = response['Prediction']
 
@@ -143,12 +144,15 @@ async def on_message(message):
                         response = requests.get(image_urls[index], stream=True)
                         data = BytesIO(response.content)
                         if prediction['class'] == "nude":
+                            nude_counter += 1
                             files.append(discord.File(data, filename=image_filenames[index], spoiler=True))
                         elif prediction['class'] == "sexy" and settings['include_sexy']:
+                            sexy_counter += 1
                             files.append(discord.File(data, filename=image_filenames[index], spoiler=True))
+                        elif prediction['class'] == "sexy" and not settings['include_sexy']:
+                            files.append(discord.File(data, filename=image_filenames[index]))
                         elif prediction['class'] == "safe":
                             files.append(discord.File(data, filename=image_filenames[index]))
-                    await message.channel.send("Posted by: {}".format(author), files = files)
                         
                 else:
                     # UPLOAD ONLY SAFE IMAGES
@@ -166,28 +170,29 @@ async def on_message(message):
                         data = BytesIO(response.content)
                         files.append(discord.File(data, filename=safe_filenames[index]))
 
-                    # message_string = "Posted by: {}".format(author)
-                    # if nude_counter > 0:
-                    #     message_string = message_string + " {} image(s) contains nudity.".format(nude_counter)
-                    # if sexy_counter > 0: 
-                    #     message_string = message_string + " {} image(s) contains sexy.".format(sexy_counter)
-                    await message.channel.send(embed=display_status(nude_counter=nude_counter, sexy_counter=sexy_counter, user=author, message_content=message.content, type="filter"))
-                    await message.channel.send("Image attachment(s):", files = files)
+                await message.channel.send(embed=display_status(nude_counter=nude_counter, sexy_counter=sexy_counter, user=author, message_content=message.content, type="filter", include_sexy=settings['include_sexy']))
+                # await message.channel.send("Image attachment(s):", files = files)
+                await message.channel.send("Image attachment(s):", files = files)
 
-            elif settings['censor']:
+            elif settings['censor'] and not(not image_urls):
                 response = detect.detectExposedFromUrl(urls=image_urls)
                 predictions = response['Prediction']
                 for index, prediction in enumerate(response['Prediction']):
                     data = censor_image(prediction)
                     files.append(discord.File(data, filename=image_filenames[index]))
-                # message_string = "Posted by: {}".format(author)
+ 
                 await message.channel.send(embed=display_status(user=author, message_content=message.content, type="censor"))
                 await message.channel.send("Image attachment(s):", files = files)
-            
+
             for index, unsupported_url in enumerate(unsupported_file_urls):
                 response = requests.get(unsupported_url)
-                unsupported_files = discord.File(BytesIO(response.content), filename=unsupported_file_filenames[index])
-                await message.channel.send(file=unsupported_files)
+                # unsupported_files = discord.File(BytesIO(response.content), filename=unsupported_file_filenames[index])
+                unsupported_files.append(discord.File(BytesIO(response.content), filename=unsupported_file_filenames[index]))
+            
+            if not(not unsupported_files):
+                if not image_urls:
+                    await message.channel.send(embed=display_status(user=author, message_content=message.content, type=None))
+                await message.channel.send("File attachment(s)", files=unsupported_files)
 
         await bot.process_commands(message)        
 

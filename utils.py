@@ -32,12 +32,13 @@ def get_image_attachments(attachments):
     for attachment in attachments:
         extension = os.path.splitext(attachment.filename)[1]
         if extension in SUPPORTED_FILE_TYPE:
+            
             image_urls.append(attachment.url)
             image_filenames.append(attachment.filename)
         else:
             unsupported_file_urls.append(attachment.url)
             unsupported_file_filenames.append(attachment.filename)
-
+    
     return image_urls, image_filenames, unsupported_file_urls, unsupported_file_filenames
 
 def is_valid_setting(setting):
@@ -124,18 +125,19 @@ def display_guild_settings(guild_settings):
     embed.set_footer(text="Please note that when the \"censor\" setting is turned on, the \"filter\" setting will automatically turn off, and vice versa. Additionally, the \"spoiler\" setting only works with the \"filter\" setting.")
     return embed
 
-def display_status(nude_counter=0 ,sexy_counter = 0 ,user="" ,message_content="", type=""):
+def display_status(nude_counter=0 ,sexy_counter = 0 ,user="" ,message_content="", type="", include_sexy=False):
         
         if type == "filter":
             if nude_counter > 0 or sexy_counter > 0:
                 embed = discord.Embed(title="Nudeny Alert", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(255,0,0))
                 embed.add_field(name="**Nudeny bot detected:**", value="", inline=False)
                 embed.add_field(name="Nude: **`{}`**".format(nude_counter), value="")
-                embed.add_field(name="Sexy: **`{}`**".format(sexy_counter), value="")
+                if include_sexy:
+                    embed.add_field(name="Sexy: **`{}`**".format(sexy_counter), value="")
             else:
                 embed = discord.Embed(title="Nudeny", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(35, 224, 192))
 
-        elif type == 'censor':
+        elif type == 'censor' or type == None:
             embed = discord.Embed(title="Nudeny", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(35, 224, 192))
 
         if message_content != "":
