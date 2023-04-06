@@ -126,21 +126,26 @@ def display_guild_settings(guild_settings):
     return embed
 
 def display_status(nude_counter=0 ,sexy_counter = 0 ,user="" ,message_content="", type="", include_sexy=False):
-        
-        if type == "filter":
-            if nude_counter > 0 or sexy_counter > 0:
-                embed = discord.Embed(title="Nudeny Alert", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(255,0,0))
-                embed.add_field(name="**Nudeny bot detected:**", value="", inline=False)
-                embed.add_field(name="Nude: **`{}`**".format(nude_counter), value="")
-                if include_sexy:
-                    embed.add_field(name="Sexy: **`{}`**".format(sexy_counter), value="")
-            else:
-                embed = discord.Embed(title="Nudeny", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(35, 224, 192))
-
-        elif type == 'censor' or type == None:
+    if type == "filter":
+        if nude_counter > 0 or sexy_counter > 0:
+            embed = discord.Embed(title="Nudeny Alert", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(255,0,0))
+            embed.add_field(name="**Nudeny bot detected:**", value="", inline=False)
+            embed.add_field(name="Nude: **`{}`**".format(nude_counter), value="")
+            if include_sexy:
+                embed.add_field(name="Sexy: **`{}`**".format(sexy_counter), value="")
+        else:
             embed = discord.Embed(title="Nudeny", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(35, 224, 192))
 
-        if message_content != "":
-            embed.add_field(name="**Message content:**", value="{}".format(message_content), inline=False)
+    elif type == 'censor' or type == None:
+        embed = discord.Embed(title="Nudeny", description="Posted by: `{}`".format(user), colour=discord.Colour.from_rgb(35, 224, 192))
 
-        return embed
+    if message_content != "":
+        embed.add_field(name="**Message content:**", value="{}".format(message_content), inline=False)
+
+    return embed
+
+def display_member_action(user, type, reason):
+    embed = discord.Embed(title="Nudeny Alert", description="`{}` has been `{}`.".format(user,type), colour=discord.Colour.from_rgb(255,0,0))
+    embed.add_field(name="**Reason:**", value="{}".format(reason), inline=False)
+
+    return embed

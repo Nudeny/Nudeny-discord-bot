@@ -8,7 +8,7 @@ from nudeny import Classify, Detect
 from io import BytesIO
 from dotenv import load_dotenv
 from utils import censor_image, get_image_attachments, is_valid_setting, display_guild_settings
-from utils import get_guild_settings, is_bool, set_guild_settings, display_status
+from utils import get_guild_settings, is_bool, set_guild_settings, display_status, display_member_action
 load_dotenv()
 
 TOKEN = os.environ.get('TOKEN')
@@ -71,44 +71,8 @@ async def guide(interaction: discord.Interaction):
     settings = get_guild_settings(guilds_settings, interaction.guild_id)
     await interaction.response.send_message(embed=display_guild_settings(guild_settings=settings))
 
-# @bot.command()
-# @commands.has_permissions(administrator=True)
-# async def set(ctx, option, *, value=None):
-
-#     # Forces an error if option is empty
-#     type(option)
-    
-#     if is_valid_setting(option) and value != None:
-#         try:
-#             if(is_bool(value)):
-#                 value = value.title()
-#                 value = ast.literal_eval(value)
-#                 settings = get_guild_settings(guilds_settings, ctx.guild.id)
-#                 settings = set_guild_settings(settings, option=option, value=value)
-#                 await ctx.send(embed=display_guild_settings(guild_settings=settings))        
-#             else:
-#                 await ctx.send("Invalid value. Please enter 'True' or 'False'.")
-#         except ValueError:
-#             await ctx.send("Invalid setting value. Please enter 'True' or 'False'.")
-#             return
-#     else:
-#         await ctx.send("Invalid option or value.")
-
-# @bot.command()
-# async def guide(ctx):
-#     settings = get_guild_settings(guilds_settings, ctx.guild.id)
-#     await ctx.send(embed=display_guild_settings(guild_settings=settings))  
-
-# @bot.event
-# async def on_command_error(ctx, error):
-#     if isinstance(error, commands.MissingPermissions):
-#         await ctx.send("You don't have permission to use that command.")
-#     else:
-#         await ctx.send(error)
-
 @bot.event
 async def on_message(message):
-    # SUPPORTED_FILE_TYPE = ['.jpg','.jpeg','.png','.bmp', '.jfif']
     image_urls = []
     image_filenames = []
     safe_urls = []
@@ -192,7 +156,21 @@ async def on_message(message):
             if not(not unsupported_files):
                 if not image_urls:
                     await message.channel.send(embed=display_status(user=author, message_content=message.content, type=None))
-                await message.channel.send("File attachment(s)", files=unsupported_files)
+                await message.channel.send("File attachment(s):", files=unsupported_files)
+
+            if settings['kick_member'] and (nude_counter > 0 or sexy_counter > 0):
+                if message.author.guild_permissions.administrator:
+                    await message.channel.send(embed=display_member_action(message.author, type="warned", reason="Warned for sending inappropriate content."))
+                else:
+                    await message.channel.send(embed=display_member_action(message.author, type="kicked", reason="Kicked for sending inappropriate content."))
+                    await message.author.kick(reason="Kicked for sending inappropriate content.")
+
+            if settings['ban_member'] and (nude_counter > 0 or sexy_counter > 0):
+                if message.author.guild_permissions.administrator:
+                    await message.channel.send(embed=display_member_action(message.author, type="warned", reason="Warned for sending inappropriate content."))
+                else:
+                    await message.channel.send(embed=display_member_action(message.author, type="Banned", reason="Banned for sending inappropriate content."))
+                    await message.author.ban(reason="Banned for sending inappropriate content.")
 
         await bot.process_commands(message)        
 
